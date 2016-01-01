@@ -122,11 +122,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
-        //twitterLoginButton = (TwitterLoginButton)findViewById(R.id.twitter_login_button);
-
-        //twitterLoginButton.setCallback(new LoginHandler());
-
         // Logs 'install' and 'app activate' App Events.
         AppEventsLogger.activateApp(this);
     }
