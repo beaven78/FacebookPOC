@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println("#####" + twitterLoginButton.getCallback());
 
+
         status = (TextView)findViewById(R.id.status);
         status.setText("Status: Ready");
 
