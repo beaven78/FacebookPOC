@@ -9,9 +9,12 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
+import com.facebook.login.widget.ProfilePictureView;
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
@@ -19,6 +22,9 @@ import com.twitter.sdk.android.core.TwitterAuthConfig;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.identity.TwitterLoginButton;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import io.fabric.sdk.android.Fabric;
 
@@ -39,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private TwitterLoginButton twitterLoginButton;
     private TextView status;
 
+    private LoginResult loginResult2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println("#####" + twitterLoginButton.getCallback());
 
-
         status = (TextView)findViewById(R.id.status);
         status.setText("Status: Ready");
 
@@ -64,9 +71,13 @@ public class MainActivity extends AppCompatActivity {
         info = (TextView)findViewById(R.id.info);
         loginButton = (LoginButton)findViewById(R.id.login_button);
 
+        //Facebook login success.
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
+
+                GetUserProfilePicture(loginResult);
+
                 info.setText(
                         "User ID: "
                                 + loginResult.getAccessToken().getUserId()
@@ -88,6 +99,47 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
+
+    }
+
+    private void GetUserProfilePicture(LoginResult loginResult) {
+        GraphRequest request = GraphRequest.newMeRequest(
+                loginResult.getAccessToken(),
+                new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(
+                            JSONObject object,
+                            GraphResponse response) {
+                        // Application code
+                        System.out.println("######");
+                        System.out.println(response.getRawResponse());
+                        System.out.println("######");
+                        System.out.println("######");
+                        System.out.println("######");
+                        System.out.println("######");
+                        System.out.println("######");
+
+                        ProfilePictureView profilePictureView;
+
+                        profilePictureView = (ProfilePictureView) findViewById(R.id.imageProfilePic);
+
+                        try {
+                            String userId = object.getString("id");
+
+                            profilePictureView.setProfileId(userId);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                });
+
+        Bundle parameters = new Bundle();
+        parameters.putString("fields", "id,name,link,picture.width(400).height(400)");
+        request.setParameters(parameters);
+        request.executeAsync();
     }
 
     @Override
