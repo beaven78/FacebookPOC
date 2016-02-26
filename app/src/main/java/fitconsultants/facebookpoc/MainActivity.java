@@ -1,10 +1,12 @@
 package fitconsultants.facebookpoc;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
@@ -19,9 +21,25 @@ import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.Callback;
 import com.twitter.sdk.android.core.Result;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.core.TwitterAuthToken;
 import com.twitter.sdk.android.core.TwitterException;
 import com.twitter.sdk.android.core.TwitterSession;
 import com.twitter.sdk.android.core.identity.TwitterLoginButton;
+import com.twitter.sdk.android.core.models.User;
+
+import java.io.InputStream;
+import java.net.URL;
+
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,13 +57,16 @@ public class MainActivity extends AppCompatActivity {
 
     private TextView info;
     private LoginButton loginButton;
+    private ImageView imageView;
 
     private CallbackManager callbackManager;
 
     private TwitterLoginButton twitterLoginButton;
     private TextView status;
 
-    private LoginResult loginResult2;
+    private LoginResult loginResult;
+
+    Bitmap bitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +86,8 @@ public class MainActivity extends AppCompatActivity {
         status = (TextView)findViewById(R.id.status);
         status.setText("Status: Ready");
 
+
+
         callbackManager = CallbackManager.Factory.create();
 
         setContentView(R.layout.activity_main);
@@ -74,16 +97,16 @@ public class MainActivity extends AppCompatActivity {
         //Facebook login success.
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
-            public void onSuccess(LoginResult loginResult) {
+            public void onSuccess(LoginResult loginRes) {
 
-                GetUserProfilePicture(loginResult);
+                GetUserProfilePicture(loginRes.getAccessToken());
 
                 info.setText(
                         "User ID: "
-                                + loginResult.getAccessToken().getUserId()
+                                + loginRes.getAccessToken().getUserId()
                                 + "\n" +
                                 "Auth Token: "
-                                + loginResult.getAccessToken().getToken()
+                                + loginRes.getAccessToken().getToken()
                 );
             }
 
@@ -104,9 +127,9 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void GetUserProfilePicture(LoginResult loginResult) {
+    private void GetUserProfilePicture(AccessToken accessToken) {
         GraphRequest request = GraphRequest.newMeRequest(
-                loginResult.getAccessToken(),
+                accessToken,
                 new GraphRequest.GraphJSONObjectCallback() {
                     @Override
                     public void onCompleted(
@@ -160,7 +183,6 @@ public class MainActivity extends AppCompatActivity {
                     result.data.getUserName() +
                     "\nAuth Token Received: " +
                     result.data.getAuthToken().token;
-
             System.out.println("#####" + output);
 
             status.setText(output);
@@ -172,18 +194,76 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public MainActivity() {
+        super();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
         // Logs 'install' and 'app activate' App Events.
         AppEventsLogger.activateApp(this);
+
+        GetUserProfilePicture(AccessToken.getCurrentAccessToken());
+
+        twitterLoginButton = (TwitterLoginButton)findViewById(R.id.twitter_login_button);
+
+        twitterLoginButton.setCallback(new LoginHandler());
+
+
+        imageView = (ImageView)findViewById(R.id.imageView);
+
+        TwitterAuthToken authToken = Twitter.getSessionManager().getActiveSession().getAuthToken();
+
+
+
+        System.out.println("#### Twitter url: " + "https://twitter.com/" + Twitter.getSessionManager().getActiveSession().getUserName() + "/profile_image?size=original");
+
+
+        Twitter.getApiClient().getAccountService().verifyCredentials(true, false, new Callback<User>() {
+            @Override
+            public void success(Result<User> userResult) {
+
+                System.out.println("#### image url: " + userResult.data.profileImageUrl);
+
+                new LoadImage().execute(userResult.data.profileImageUrl.replace("_normal",""));
+            }
+
+            @Override
+            public void failure(TwitterException e) {
+            }
+        });
+
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
 
-        // Logs 'app deactivate' App Event.
-        AppEventsLogger.deactivateApp(this);
+    private class LoadImage extends AsyncTask<String, String, Bitmap> {
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            System.out.println("##### fetching image");
+        }
+        protected Bitmap doInBackground(String... args) {
+            try {
+                bitmap = BitmapFactory.decodeStream((InputStream)new URL(args[0]).getContent());
+
+                System.out.println("###### Height: " + bitmap.getHeight());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return bitmap;
+        }
+
+        protected void onPostExecute(Bitmap image) {
+
+
+            if(image != null){
+                imageView.setImageBitmap(image);
+
+
+            }
+        }
     }
 }

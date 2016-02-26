@@ -31,7 +31,9 @@
         android:id="@+id/twitter_login_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"/>
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/status"
+        android:layout_toEndOf="@+id/status" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -46,6 +48,18 @@
         android:id="@+id/imageProfilePic"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"/>
+        android:layout_below="@+id/login_button"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <ImageView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:id="@+id/imageView"
+        android:layout_toEndOf="@+id/status"
+        android:layout_below="@+id/twitter_login_button"
+        android:layout_toRightOf="@+id/status"
+        android:layout_marginTop="30dp"
+        android:layout_marginBottom="30dp"/>
 
 </RelativeLayout>
